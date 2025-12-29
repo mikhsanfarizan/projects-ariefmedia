@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= meta?.title %></title>
+    <meta name="description" content="<%= meta?.description %>">
+    <%- include("head-link"); %>
+</head>
+<body>
+    <%- include("top-nav", {
+        whatsapp_number: meta?.whatsapp_number,
+        site_text_logo: meta?.site_text_logo
+    }); %>
+    <%- body %>
+    <%- include("footer"); %>
+    <%- include("footer-script"); %>
+</body>
+</html>

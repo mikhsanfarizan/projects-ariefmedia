@@ -1,0 +1,31 @@
+{
+  "name": "ariefmedia",
+  "version": "1.0.0",
+  "description": "",
+  "main": "app.js",
+  "scripts": {
+    "dev": "nodemon app.js",
+    "start": "node app.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mikhsanfarizan/projects-ariefmedia.git"
+  },
+  "keywords": [],
+  "author": "NIXMEDIA Solution with ikhsan",
+  "license": "ISC",
+  "type": "module",
+  "bugs": {
+    "url": "https://github.com/mikhsanfarizan/projects-ariefmedia/issues"
+  },
+  "homepage": "https://github.com/mikhsanfarizan/projects-ariefmedia#readme",
+  "dependencies": {
+    "dotenv": "^17.2.3",
+    "ejs": "^3.1.10",
+    "express": "^5.2.1",
+    "express-ejs-layouts": "^2.5.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.11"
+  }
+}
