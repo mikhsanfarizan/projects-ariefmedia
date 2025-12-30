@@ -3,7 +3,7 @@
 Project website menggunakan Express.js dengan EJS template engine.
 
 ## 📋 Prasyarat
-- Node.js versi 14 atau lebih baru
+- Node.js versi stable terbaru (dalam kasus ini versi 24.11.1)
 - npm (biasanya sudah terinstall bersama Node.js)
 
 ## 🚀 Cara Menjalankan Project
