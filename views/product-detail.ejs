@@ -1,9 +1,10 @@
+<div id="hydration-data" data="<%= JSON.stringify(product); %>"></div>
 <section class="detail-section">
   <div class="container">
     <div class="breadcrumb">
       <a href="/">Home</a> &gt;
-      <span id="breadcrumb-category">Kategori</span> &gt;
-      <span id="breadcrumb-title" class="active-crumb">Nama Produk</span>
+      <span id="breadcrumb-category"><%= product?.categories %></span> &gt;
+      <span id="breadcrumb-title" class="active-crumb"><%= product?.product_name; %></span>
     </div>
 
     <div class="detail-grid">
@@ -15,8 +16,8 @@
 
           <img
             id="main-image"
-            src=""
-            alt="Product Image"
+            src="/<%= product?.featured_image %>"
+            alt="Pemesanan <%= product?.product_name %>"
             class="media-content active"
           />
           <iframe
@@ -33,20 +34,20 @@
       </div>
 
       <div class="detail-info">
-        <h1 id="product-title" class="detail-title">Loading...</h1>
+        <h1 id="product-title" class="detail-title"><%= product?.product_name %></h1>
 
         <a id="wa-button" href="#" target="_blank" class="btn-whatsapp">
           <i class="fab fa-whatsapp"></i> PESAN SEKARANG
         </a>
 
         <div class="product-meta">
-          <p><strong>Category:</strong> <span id="product-category">-</span></p>
-          <p><strong>Tags:</strong> <span id="product-tags">-</span></p>
+          <p><strong>Category:</strong> <span id="product-category"><%= product?.categories %></span></p>
+          <p><strong>Tags:</strong> <span id="product-tags"><%= product?.tags %></span></p>
         </div>
 
         <div class="product-description-content">
           <h3><i class="fas fa-pencil-alt"></i> Deskripsi</h3>
-          <div id="product-description"></div>
+          <div id="product-description"><%- product?.description %></div>
         </div>
       </div>
     </div>

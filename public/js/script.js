@@ -175,216 +175,235 @@ function mapJsonCategoryToUi(jsonCategoryString) {
 }
 
 async function loadProducts() {
-    try {
-        const response = await fetch('data.json');
-        if (!response.ok) throw new Error('Gagal memuat data.json');
+  try {
+    const response = await fetch("/product/list");
+    if (!response.ok) throw new Error("Gagal memuat data.json");
 
-        const rawData = await response.json();
+    const rawData = await response.json();
 
-        allProductsData = rawData.map(item => ({
-            ...item,
-            ui_category: mapJsonCategoryToUi(item.categories || "")
-        }));
+    allProductsData = rawData.map((item) => ({
+      ...item,
+      ui_category: mapJsonCategoryToUi(item.categories || ""),
+    }));
 
-        // Halaman Home
-        if (document.getElementById('productsContainer')) {
-            new ProductManager(allProductsData);
-        }
-
-        // Halaman Detail
-        if (window.location.pathname.includes('detailpage.html')) {
-            initDetailPage();
-        }
-
-    } catch (error) {
-        console.error("Error loading products:", error);
-        const container = document.getElementById('productsContainer');
-        if (container) container.innerHTML = '<p class="slider-loading">Gagal memuat produk. Pastikan file data.json tersedia.</p>';
+    // Halaman Home
+    if (document.getElementById("productsContainer")) {
+      new ProductManager(allProductsData);
     }
+
+    // Halaman Detail
+    if (window.location.pathname.includes("product")) {
+      initDetailPage();
+    }
+  } catch (error) {
+    console.error("Error loading products:", error);
+    const container = document.getElementById("productsContainer");
+    if (container)
+      container.innerHTML =
+        '<p class="slider-loading">Gagal memuat produk. Pastikan file data.json tersedia.</p>';
+  }
 }
 
 function getProductImage(product) {
-    if (product.featured_image) return product.featured_image;
-    if (product.gallery_images) {
-        const images = product.gallery_images.split(',');
-        if (images.length > 0) return images[0].trim();
-    }
-    return "https://images.unsplash.com/photo-1581094794329-c8112a89af12?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80";
+  if (product.featured_image) return product.featured_image;
+  if (product.gallery_images) {
+    const images = product.gallery_images.split(",");
+    if (images.length > 0) return images[0].trim();
+  }
+  return "https://images.unsplash.com/photo-1581094794329-c8112a89af12?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80";
 }
 
 // Helper: Create HTML Element for Product Card
 function createProductCardElement(product) {
-    const card = document.createElement('a');
-    card.href = `detailpage.html?slug=${product.slug}`;
-    card.className = 'product-card-simple';
+  const card = document.createElement("a");
+  card.href = `/product/${product.slug}`;
+  card.className = "product-card-simple";
 
-    card.innerHTML = `
+  card.innerHTML = `
         <div class="product-image-simple">
-            <img src="${getProductImage(product)}" alt="${product.product_name}" loading="lazy">
+            <img src="${getProductImage(product)}" alt="${
+    product.product_name
+  }" loading="lazy">
         </div>
         <div class="product-title-simple">
             ${product.product_name}
         </div>
     `;
-    return card;
+  return card;
 }
 
 class CategorySliderSimple {
-    constructor(containerId, products, categoryId) {
-        this.container = document.getElementById(containerId);
-        this.products = products;
-        this.categoryId = categoryId;
-        this.currentPosition = 0;
-        this.productsPerView = 5;
-        this.stepSize = 1;
-        this.calculateProductsPerView();
-        this.init();
+  constructor(containerId, products, categoryId) {
+    this.container = document.getElementById(containerId);
+    this.products = products;
+    this.categoryId = categoryId;
+    this.currentPosition = 0;
+    this.productsPerView = 5;
+    this.stepSize = 1;
+    this.calculateProductsPerView();
+    this.init();
+  }
+
+  calculateProductsPerView() {
+    const width = window.innerWidth;
+    if (width >= 1200) this.productsPerView = 5;
+    else if (width >= 992) this.productsPerView = 4;
+    else if (width >= 768) this.productsPerView = 3;
+    else if (width >= 576) this.productsPerView = 2;
+    else this.productsPerView = 1;
+    this.hasNavigation = this.products.length > this.productsPerView;
+  }
+
+  init() {
+    this.render();
+    if (this.hasNavigation) {
+      this.setupEventListeners();
+      this.updateButtonStates();
     }
+  }
 
-    calculateProductsPerView() {
-        const width = window.innerWidth;
-        if (width >= 1200) this.productsPerView = 5;
-        else if (width >= 992) this.productsPerView = 4;
-        else if (width >= 768) this.productsPerView = 3;
-        else if (width >= 576) this.productsPerView = 2;
-        else this.productsPerView = 1;
-        this.hasNavigation = this.products.length > this.productsPerView;
-    }
+  render() {
+    const info = categoryInfo[this.categoryId];
 
-    init() {
-        this.render();
-        if (this.hasNavigation) {
-            this.setupEventListeners();
-            this.updateButtonStates();
-        }
-    }
-
-    render() {
-        const info = categoryInfo[this.categoryId];
-
-        this.container.innerHTML = `
-            <div class="category-slider-container ${!this.hasNavigation ? 'category-few-products' : ''}">
+    this.container.innerHTML = `
+            <div class="category-slider-container ${
+              !this.hasNavigation ? "category-few-products" : ""
+            }">
                 <div class="category-header-slider">
                     <div class="category-title-slider">
-                        <div class="category-icon-slider"><i class="${info.icon}"></i></div>
-                        <h3>${info.name} <span class="products-count">(${this.products.length} Produk)</span></h3>
+                        <div class="category-icon-slider"><i class="${
+                          info.icon
+                        }"></i></div>
+                        <h3>${info.name} <span class="products-count">(${
+      this.products.length
+    } Produk)</span></h3>
                     </div>
                 </div>
                 <div class="slider-main-container">
-                    ${this.hasNavigation ? `<button class="category-nav-side prev-side" id="prev-${this.categoryId}" disabled><i class="fas fa-chevron-left"></i></button>` : ''}
+                    ${
+                      this.hasNavigation
+                        ? `<button class="category-nav-side prev-side" id="prev-${this.categoryId}" disabled><i class="fas fa-chevron-left"></i></button>`
+                        : ""
+                    }
                     <div class="products-slider-wrapper">
-                        <div class="products-slider-track" id="track-${this.categoryId}"></div>
+                        <div class="products-slider-track" id="track-${
+                          this.categoryId
+                        }"></div>
                     </div>
-                    ${this.hasNavigation ? `<button class="category-nav-side next-side" id="next-${this.categoryId}"><i class="fas fa-chevron-right"></i></button>` : ''}
+                    ${
+                      this.hasNavigation
+                        ? `<button class="category-nav-side next-side" id="next-${this.categoryId}"><i class="fas fa-chevron-right"></i></button>`
+                        : ""
+                    }
                 </div>
             </div>
         `;
 
-        const track = document.getElementById(`track-${this.categoryId}`);
-        this.products.forEach(product => {
-            const cardLink = createProductCardElement(product);
-            const sliderCard = document.createElement('a');
-            sliderCard.href = cardLink.href;
-            sliderCard.className = 'product-slider-card';
-            sliderCard.innerHTML = cardLink.innerHTML;
-            track.appendChild(sliderCard);
-        });
-    }
+    const track = document.getElementById(`track-${this.categoryId}`);
+    this.products.forEach((product) => {
+      const cardLink = createProductCardElement(product);
+      const sliderCard = document.createElement("a");
+      sliderCard.href = cardLink.href;
+      sliderCard.className = "product-slider-card";
+      sliderCard.innerHTML = cardLink.innerHTML;
+      track.appendChild(sliderCard);
+    });
+  }
 
-    setupEventListeners() {
-        const prevBtn = document.getElementById(`prev-${this.categoryId}`);
-        const nextBtn = document.getElementById(`next-${this.categoryId}`);
-        if (prevBtn) prevBtn.addEventListener('click', () => this.scrollPrev());
-        if (nextBtn) nextBtn.addEventListener('click', () => this.scrollNext());
+  setupEventListeners() {
+    const prevBtn = document.getElementById(`prev-${this.categoryId}`);
+    const nextBtn = document.getElementById(`next-${this.categoryId}`);
+    if (prevBtn) prevBtn.addEventListener("click", () => this.scrollPrev());
+    if (nextBtn) nextBtn.addEventListener("click", () => this.scrollNext());
 
-        let resizeTimeout;
-        window.addEventListener('resize', () => {
-            clearTimeout(resizeTimeout);
-            resizeTimeout = setTimeout(() => this.handleResize(), 250);
-        });
-    }
+    let resizeTimeout;
+    window.addEventListener("resize", () => {
+      clearTimeout(resizeTimeout);
+      resizeTimeout = setTimeout(() => this.handleResize(), 250);
+    });
+  }
 
-    handleResize() {
-        const oldVal = this.productsPerView;
-        this.calculateProductsPerView();
-        if (oldVal !== this.productsPerView) {
-            this.currentPosition = 0;
-            this.render();
-        }
+  handleResize() {
+    const oldVal = this.productsPerView;
+    this.calculateProductsPerView();
+    if (oldVal !== this.productsPerView) {
+      this.currentPosition = 0;
+      this.render();
     }
+  }
 
-    scrollPrev() {
-        if (this.currentPosition > 0) {
-            this.currentPosition -= this.stepSize;
-            this.updateSlider();
-        }
+  scrollPrev() {
+    if (this.currentPosition > 0) {
+      this.currentPosition -= this.stepSize;
+      this.updateSlider();
     }
+  }
 
-    scrollNext() {
-        const maxPos = this.products.length - this.productsPerView;
-        if (this.currentPosition < maxPos) {
-            this.currentPosition += this.stepSize;
-            this.updateSlider();
-        }
+  scrollNext() {
+    const maxPos = this.products.length - this.productsPerView;
+    if (this.currentPosition < maxPos) {
+      this.currentPosition += this.stepSize;
+      this.updateSlider();
     }
+  }
 
-    updateSlider() {
-        const track = document.getElementById(`track-${this.categoryId}`);
-        const card = track.querySelector('.product-slider-card');
-        if (!card) return;
-        const width = card.offsetWidth + 15;
-        track.style.transform = `translateX(-${this.currentPosition * width}px)`;
-        this.updateButtonStates();
-    }
+  updateSlider() {
+    const track = document.getElementById(`track-${this.categoryId}`);
+    const card = track.querySelector(".product-slider-card");
+    if (!card) return;
+    const width = card.offsetWidth + 15;
+    track.style.transform = `translateX(-${this.currentPosition * width}px)`;
+    this.updateButtonStates();
+  }
 
-    updateButtonStates() {
-        const prevBtn = document.getElementById(`prev-${this.categoryId}`);
-        const nextBtn = document.getElementById(`next-${this.categoryId}`);
-        const maxPos = this.products.length - this.productsPerView;
-        if (prevBtn) prevBtn.disabled = this.currentPosition <= 0;
-        if (nextBtn) nextBtn.disabled = this.currentPosition >= maxPos;
-    }
+  updateButtonStates() {
+    const prevBtn = document.getElementById(`prev-${this.categoryId}`);
+    const nextBtn = document.getElementById(`next-${this.categoryId}`);
+    const maxPos = this.products.length - this.productsPerView;
+    if (prevBtn) prevBtn.disabled = this.currentPosition <= 0;
+    if (nextBtn) nextBtn.disabled = this.currentPosition >= maxPos;
+  }
 }
 
 class ProductManager {
-    constructor(data) {
-        this.productsData = data;
-        this.container = document.getElementById('productsContainer');
-        this.init();
-    }
+  constructor(data) {
+    this.productsData = data;
+    this.container = document.getElementById("productsContainer");
+    this.init();
+  }
 
-    init() {
-        this.renderAllCategories();
-        this.setupFilters();
-    }
+  init() {
+    this.renderAllCategories();
+    this.setupFilters();
+  }
 
-    renderAllCategories() {
-        this.container.innerHTML = '';
-        Object.keys(categoryInfo).forEach(catId => {
-            const products = this.productsData.filter(p => p.ui_category === catId);
-            if (products.length > 0) {
-                const div = document.createElement('div');
-                div.id = `slider-${catId}`;
-                this.container.appendChild(div);
-                new CategorySliderSimple(`slider-${catId}`, products, catId);
-                const hr = document.createElement('hr');
-                hr.className = 'category-divider';
-                this.container.appendChild(hr);
-            }
-        });
-        if (this.container.lastChild) this.container.lastChild.remove();
-    }
+  renderAllCategories() {
+    this.container.innerHTML = "";
+    Object.keys(categoryInfo).forEach((catId) => {
+      const products = this.productsData.filter((p) => p.ui_category === catId);
+      if (products.length > 0) {
+        const div = document.createElement("div");
+        div.id = `slider-${catId}`;
+        this.container.appendChild(div);
+        new CategorySliderSimple(`slider-${catId}`, products, catId);
+        const hr = document.createElement("hr");
+        hr.className = "category-divider";
+        this.container.appendChild(hr);
+      }
+    });
+    if (this.container.lastChild) this.container.lastChild.remove();
+  }
 
-    renderSingleCategory(catId) {
-        this.container.innerHTML = '';
-        if (!categoryInfo[catId]) return;
+  renderSingleCategory(catId) {
+    this.container.innerHTML = "";
+    if (!categoryInfo[catId]) return;
 
-        const info = categoryInfo[catId];
-        const products = this.productsData.filter(p => p.ui_category === catId);
+    const info = categoryInfo[catId];
+    const products = this.productsData.filter((p) => p.ui_category === catId);
 
-        const section = document.createElement('div');
-        section.className = 'product-category-section';
-        section.innerHTML = `
+    const section = document.createElement("div");
+    section.className = "product-category-section";
+    section.innerHTML = `
             <div class="category-header">
                 <div class="category-icon"><i class="${info.icon}"></i></div>
                 <div class="category-title-text">
@@ -394,89 +413,84 @@ class ProductManager {
             <div class="products-grid-category"></div>
         `;
 
-        const grid = section.querySelector('.products-grid-category');
-        if (products.length === 0) {
-            grid.innerHTML = '<p>Produk belum tersedia.</p>';
-        } else {
-            products.forEach(p => {
-                grid.appendChild(createProductCardElement(p));
-            });
-        }
-        this.container.appendChild(section);
+    const grid = section.querySelector(".products-grid-category");
+    if (products.length === 0) {
+      grid.innerHTML = "<p>Produk belum tersedia.</p>";
+    } else {
+      products.forEach((p) => {
+        grid.appendChild(createProductCardElement(p));
+      });
     }
+    this.container.appendChild(section);
+  }
 
-    setupFilters() {
-        const btns = document.querySelectorAll('.filter-btn');
-        btns.forEach(btn => {
-            btn.addEventListener('click', () => {
-                btns.forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                const filter = btn.getAttribute('data-filter');
-                if (filter === 'all') this.renderAllCategories();
-                else this.renderSingleCategory(filter);
-            });
-        });
-    }
+  setupFilters() {
+    const btns = document.querySelectorAll(".filter-btn");
+    btns.forEach((btn) => {
+      btn.addEventListener("click", () => {
+        btns.forEach((b) => b.classList.remove("active"));
+        btn.classList.add("active");
+        const filter = btn.getAttribute("data-filter");
+        if (filter === "all") this.renderAllCategories();
+        else this.renderSingleCategory(filter);
+      });
+    });
+  }
 }
 
 // ================= 4. TESTIMONIALS SLIDER =================
-const testimonialTrack = document.getElementById('testimonialTrack');
-const testimonialPrevBtn = document.getElementById('testimonialPrevBtn');
-const testimonialNextBtn = document.getElementById('testimonialNextBtn');
+const testimonialTrack = document.getElementById("testimonialTrack");
+const testimonialPrevBtn = document.getElementById("testimonialPrevBtn");
+const testimonialNextBtn = document.getElementById("testimonialNextBtn");
 
 if (testimonialTrack) {
-    const slides = document.querySelectorAll('.testimonial-slide');
-    let index = 0;
+  const slides = document.querySelectorAll(".testimonial-slide");
+  let index = 0;
 
-    function updateTestimonial() {
-        testimonialTrack.style.transform = `translateX(-${index * 100}%)`;
-    }
+  function updateTestimonial() {
+    testimonialTrack.style.transform = `translateX(-${index * 100}%)`;
+  }
 
-    if (testimonialNextBtn) {
-        testimonialNextBtn.addEventListener('click', () => {
-            index = (index + 1) % slides.length;
-            updateTestimonial();
-        });
-    }
+  if (testimonialNextBtn) {
+    testimonialNextBtn.addEventListener("click", () => {
+      index = (index + 1) % slides.length;
+      updateTestimonial();
+    });
+  }
 
-    if (testimonialPrevBtn) {
-        testimonialPrevBtn.addEventListener('click', () => {
-            index = (index - 1 + slides.length) % slides.length;
-            updateTestimonial();
-        });
-    }
+  if (testimonialPrevBtn) {
+    testimonialPrevBtn.addEventListener("click", () => {
+      index = (index - 1 + slides.length) % slides.length;
+      updateTestimonial();
+    });
+  }
 }
 
 // ================= 5. INITIALIZATION =================
-// document.addEventListener('DOMContentLoaded', () => {
-//     loadProducts();
-// });
+document.addEventListener("DOMContentLoaded", () => {
+  loadProducts();
+});
 
 // ================= 6. DETAIL PAGE LOGIC (ZOOM + GALLERY + VIDEO) =================
 
 function initDetailPage() {
-    const urlParams = new URLSearchParams(window.location.search);
-    const productSlug = urlParams.get('slug');
+  // Polling: Menunggu data siap
+  const hydrationProduct = document.getElementById("hydration-data").getAttribute("data");
+  const productData = JSON.parse(hydrationProduct);
+  const checkDataInterval = setInterval(() => {
+    if (typeof productData !== "undefined" && productData !== "") {
+      clearInterval(checkDataInterval);
 
-    if (!productSlug) {
-        window.location.href = 'index.html';
-        return;
+      const product = productData;
+
+      if (product) {
+        renderDetailContent(product);
+      } else {
+        document.querySelector(".detail-grid").innerHTML =
+          "<h3>Produk tidak ditemukan.</h3>";
+      }
     }
-
-    // Polling: Menunggu data siap
-    const checkDataInterval = setInterval(() => {
-        if (typeof allProductsData !== 'undefined' && allProductsData.length > 0) {
-            clearInterval(checkDataInterval);
-
-            const product = allProductsData.find(p => p.slug === productSlug);
-
-            if (product) {
-                renderDetailContent(product);
-            } else {
-                document.querySelector('.detail-grid').innerHTML = '<h3>Produk tidak ditemukan.</h3>';
-            }
-        }
-    }, 100);
+  }, 100);
 }
 
 function renderDetailContent(product) {
@@ -569,7 +583,7 @@ function renderDetailContent(product) {
             mainVideo.classList.remove('active');
             mainVideo.src = "";
 
-            mainImg.src = media.src;
+            mainImg.src = `/${media.src}`;
             mainImg.classList.add('active');
 
             if (direction === 'next') {
@@ -582,7 +596,7 @@ function renderDetailContent(product) {
                 btnZoom.style.display = 'block';
                 btnZoom.onclick = (e) => {
                     e.stopPropagation();
-                    openLightbox(media.src);
+                    openLightbox(`/${media.src}`);
                 };
             }
         } else {
@@ -684,7 +698,7 @@ function renderDetailContent(product) {
         thumbBox.className = 'thumb-box';
 
         if (media.type === 'image') {
-            thumbBox.innerHTML = `<img src="${media.src}" alt="Thumb">`;
+            thumbBox.innerHTML = `<img src="/${media.src}" alt="Thumb">`;
         } else {
             thumbBox.innerHTML = `
                 <img src="${media.thumbnail}" alt="Video">

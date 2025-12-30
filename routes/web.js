@@ -1,16 +1,20 @@
 import "dotenv/config";
 import express from "express";
+import { addMeta } from "../middlewares/meta-middleware.js";
 const router = express.Router();
 
-router.get("/", (req, res) => {
+router.get("/", addMeta("Home"), async (req, res) => {
+  try {
     res.render("home", {
-        meta: {
-            title: `Home - ${process.env.SITE_TITLE}`,
-            description: process.env.SITE_DESCRIPTION,
-            site_text_logo: process.env.SITE_TEXT_LOGO,
-            whatsapp_number: process.env.SITE_WHATSAPP_NUMBER
-        }
+      meta: res.locals.meta
     });
+  } catch (error) {
+    console.error(error?.message);
+    res.render("error", {
+      error_code: 500,
+      error_message: error?.message,
+    });
+  }
 });
 
 export default router;

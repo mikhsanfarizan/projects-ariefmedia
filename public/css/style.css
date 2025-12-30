@@ -462,8 +462,8 @@ nav ul li a:hover::after {
 .category-icon {
     background-color: var(--primary);
     color: var(--white);
-    width: 40px;
-    height: 40px;
+    width: 45px;
+    height: 45px;
     border-radius: 6px;
     display: flex;
     align-items: center;
@@ -474,13 +474,13 @@ nav ul li a:hover::after {
 
 .category-title-text h3 {
     font-size: 24px;
-    margin-bottom: 5px;
     color: var(--primary);
 }
 
 .category-title-text p {
     color: var(--gray);
     font-size: 14px;
+    margin-top: -4px;
 }
 
 .products-grid-all {
