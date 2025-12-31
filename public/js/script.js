@@ -217,7 +217,7 @@ function getProductImage(product) {
 function createProductCardElement(product) {
   const card = document.createElement("a");
   card.href = `/product/${product.slug}`;
-  card.className = "product-card-simple";
+  card.className = "product-card-simple position-relative";
 
   card.innerHTML = `
         <div class="product-image-simple">
@@ -225,7 +225,8 @@ function createProductCardElement(product) {
     product.product_name
   }" loading="lazy">
         </div>
-        <div class="product-title-simple">
+        <svg class="product-blob-title position-absolute " width="100%" height="100%" id="svg" viewBox="0 0 1440 590" xmlns="http://www.w3.org/2000/svg" class="transition duration-300 ease-in-out delay-150"><defs><linearGradient id="gradient" x1="38%" y1="1%" x2="62%" y2="99%"><stop offset="5%" stop-color="#0693e3"></stop><stop offset="95%" stop-color="#9900ef"></stop></linearGradient></defs><path d="M 0,600 L 0,300 C 109.33333333333331,314.66666666666663 218.66666666666663,329.3333333333333 400,289 C 581.3333333333334,248.66666666666669 834.6666666666667,153.33333333333334 1020,121 C 1205.3333333333333,88.66666666666666 1322.6666666666665,119.33333333333333 1440,150 L 1440,600 L 0,600 Z" stroke="none" stroke-width="0" fill="url(#gradient)" fill-opacity="1" class="transition-all duration-300 ease-in-out delay-150 path-0"></path></svg>
+        <div class="product-title-simple position-absolute">
             ${product.product_name}
         </div>
     `;
@@ -304,7 +305,7 @@ class CategorySliderSimple {
       const cardLink = createProductCardElement(product);
       const sliderCard = document.createElement("a");
       sliderCard.href = cardLink.href;
-      sliderCard.className = "product-slider-card";
+      sliderCard.className = "product-slider-card position-relative";
       sliderCard.innerHTML = cardLink.innerHTML;
       track.appendChild(sliderCard);
     });
