@@ -164,27 +164,43 @@ let allProductsData = [];
 function mapJsonCategoryToUi(jsonCategoryString) {
     const cat = jsonCategoryString.toLowerCase();
 
-    if (cat.includes('stiker') || cat.includes('baliho') || cat.includes('banner') || cat.includes('bendera') || cat.includes('id card') || cat.includes('buku') || cat.includes('undangan') || cat.includes('kartu')) return 'digital-printing';
-    if (cat.includes('sablon') || cat.includes('kaos') || cat.includes('jersey') || cat.includes('lanyard') || cat.includes('pdh') || cat.includes('pakaian')) return 'sablon';
-    if (cat.includes('akrilik') || cat.includes('tempat tisu') || cat.includes('nomor meja') || cat.includes('piala') || cat.includes('vandel') || cat.includes('nama dada')) return 'akrilik';
-    if (cat.includes('papan') || cat.includes('wall') || cat.includes('neon') || cat.includes('prasasti') || cat.includes('letter') || cat.includes('logo')) return 'signage';
-    if (cat.includes('gantungan') || cat.includes('jam') || cat.includes('pin') || cat.includes('mug')) return 'merchandise';
-    if (cat.includes('gerobak')) return 'gerobak';
+    // 1. Digital Printing
+    if (cat.includes('stiker') || cat.includes('label') || cat.includes('baliho') || cat.includes('banner') || cat.includes('spanduk') || cat.includes('bendera') || cat.includes('umbul') || cat.includes('id card') || cat.includes('member') || cat.includes('kartu') || cat.includes('buku') || cat.includes('undangan') || cat.includes('yasin') || cat.includes('brosur') || cat.includes('poster') || cat.includes('print')) return 'digital-printing';
+    // 2. Sablon Digital
+    if (cat.includes('sablon') || cat.includes('kaos') || cat.includes('jersey') || cat.includes('baju') || cat.includes('kemeja') || cat.includes('pdh') || cat.includes('pakaian') || cat.includes('lanyard') || cat.includes('tali') || cat.includes('plastik') || cat.includes('kemasan') || cat.includes('packaging') || cat.includes('sponbond') || cat.includes('tas') || cat.includes('totebag')) return 'sablon';
+    // 3. Produk Akrilik
+    if (cat.includes('akrilik') || cat.includes('acrylic') || cat.includes('tempat tisu') || cat.includes('nomor meja') || cat.includes('piala') || cat.includes('vandel') || cat.includes('plakat') || cat.includes('nama dada') || cat.includes('name tag') || cat.includes('kotak') || cat.includes('display') || cat.includes('standee') || cat.includes('undian')) return 'akrilik';
+    // 4. Signage & Papan
+    if (cat.includes('papan') || cat.includes('sign') || cat.includes('neon') || cat.includes('letter') || cat.includes('huruf') || cat.includes('timbul') || cat.includes('prasasti') || cat.includes('marmer') || cat.includes('logo') || cat.includes('rambu') || cat.includes('wall') || cat.includes('running') || cat.includes('led') || cat.includes('totem')) return 'signage';
+    // 5. Merchandise
+    if (cat.includes('merchandise') || cat.includes('souvenir') || cat.includes('gantungan') || cat.includes('kunci') || cat.includes('jam') || cat.includes('pin') || cat.includes('mug') || cat.includes('tumbler') || cat.includes('botol') || cat.includes('payung') || cat.includes('pulpen') || cat.includes('kalender')) return 'merchandise';
+    // 6. Gerobak & Branding
+    if (cat.includes('gerobak') || cat.includes('booth') || cat.includes('rombong') || cat.includes('branding') || cat.includes('mobil') || cat.includes('motor') || cat.includes('vehicle') || cat.includes('stiker mobil')) return 'gerobak';
 
     return 'digital-printing';
 }
 
 async function loadProducts() {
   try {
-    const response = await fetch("/product/list");
+    // Pastikan path ini sesuai dengan file JSON Anda (misal: "data.json" atau "/product/list")
+    const response = await fetch("/product/list"); 
     if (!response.ok) throw new Error("Gagal memuat data.json");
 
     const rawData = await response.json();
-
+    // --- MODIFIKASI DIMULAI DI SINI ---
     allProductsData = rawData.map((item) => ({
       ...item,
       ui_category: mapJsonCategoryToUi(item.categories || ""),
-    }));
+    })).sort((a, b) => {
+        // Logika Sorting A-Z berdasarkan product_name
+        const nameA = a.product_name.toLowerCase(); // Ubah ke huruf kecil agar akurat
+        const nameB = b.product_name.toLowerCase();
+        
+        if (nameA < nameB) return -1; // Nama A lebih dulu dari B
+        if (nameA > nameB) return 1;  // Nama B lebih dulu dari A
+        return 0; // Sama
+    });
+    // --- MODIFIKASI SELESAI ---
 
     // Halaman Home
     if (document.getElementById("productsContainer")) {
@@ -497,8 +513,11 @@ function initDetailPage() {
 function renderDetailContent(product) {
     // 1. Render Teks Info
     document.title = `${product.product_name} - Arief Media`;
-    document.getElementById('breadcrumb-title').textContent = product.product_name;
-    document.getElementById('breadcrumb-category').textContent = product.categories;
+    const breadTitle = document.getElementById('breadcrumb-title');
+    const breadCat = document.getElementById('breadcrumb-category');
+    if(breadTitle) breadTitle.textContent = product.product_name;
+    if(breadCat) breadCat.textContent = product.categories;
+    
     document.getElementById('product-title').textContent = product.product_name;
     document.getElementById('product-category').textContent = product.categories;
     document.getElementById('product-tags').textContent = product.tags;
@@ -518,23 +537,41 @@ function renderDetailContent(product) {
         });
     }
 
-    // Helper Parse CSV
+    // Helper Parse Media
     const processMedia = (str, type) => {
         if (!str) return;
         const items = str.split(',').map(s => s.trim());
         items.forEach(item => {
             if (item && item !== product.featured_image) {
                 if (type === 'video') {
-                    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
-                    const match = item.match(regExp);
-                    if (match && match[2].length === 11) {
+                    // Cek Apakah YouTube
+                    const ytRegExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+                    const ytMatch = item.match(ytRegExp);
+
+                    // Cek Apakah Video Lokal (mp4/webm/ogg)
+                    const localVideoRegExp = /\.(mp4|webm|ogg)$/i;
+                    const localMatch = item.match(localVideoRegExp);
+
+                    if (ytMatch && ytMatch[2].length === 11) {
+                        // KASUS YOUTUBE
                         mediaList.push({
                             type: 'video',
-                            src: `https://www.youtube.com/embed/${match[2]}`,
-                            thumbnail: `https://img.youtube.com/vi/${match[2]}/hqdefault.jpg`
+                            subtype: 'youtube',
+                            src: `https://www.youtube.com/embed/${ytMatch[2]}`,
+                            thumbnail: `https://img.youtube.com/vi/${ytMatch[2]}/hqdefault.jpg`
+                        });
+                    } else if (localMatch) {
+                        // KASUS VIDEO LOKAL
+                        // Kita gunakan featured image sebagai thumbnail karena video lokal tidak punya API thumbnail otomatis
+                        mediaList.push({
+                            type: 'video',
+                            subtype: 'local',
+                            src: item, // Path file, misal: videos/products/template.mp4
+                            thumbnail: product.featured_image // Fallback thumbnail
                         });
                     }
                 } else {
+                    // KASUS GAMBAR
                     mediaList.push({
                         type: 'image',
                         src: item
@@ -549,49 +586,78 @@ function renderDetailContent(product) {
 
     // 3. Render ke DOM
     const mainImg = document.getElementById('main-image');
-    const mainVideo = document.getElementById('main-video');
+    // Ini adalah iframe untuk YouTube
+    const mainVideoIframe = document.getElementById('main-video'); 
     const thumbContainer = document.getElementById('thumbnail-container');
     const btnZoom = document.getElementById('btn-zoom');
     const displayContainer = document.querySelector('.main-media-display');
 
+    // --- SETUP ELEMEN VIDEO LOKAL (Membuat elemen <video> secara dinamis jika belum ada) ---
+    let mainVideoLocal = document.getElementById('main-local-video');
+    if (!mainVideoLocal && displayContainer) {
+        mainVideoLocal = document.createElement('video');
+        mainVideoLocal.id = 'main-local-video';
+        mainVideoLocal.controls = true;
+        mainVideoLocal.playsInline = true;
+        // Styling dasar agar mirip dengan iframe/img saat aktif
+        mainVideoLocal.style.cssText = "width: 100%; height: 100%; object-fit: contain; display: none; position: absolute; top: 0; left: 0;";
+        displayContainer.appendChild(mainVideoLocal);
+    }
+
     // Reset Area
     thumbContainer.innerHTML = '';
     mainImg.classList.remove('active');
-    mainVideo.classList.remove('active');
+    if(mainVideoIframe) {
+        mainVideoIframe.classList.remove('active');
+        mainVideoIframe.style.display = 'none';
+        mainVideoIframe.src = ""; // Stop YouTube audio
+    }
+    if(mainVideoLocal) {
+        mainVideoLocal.style.display = 'none';
+        mainVideoLocal.pause(); // Stop local video
+        mainVideoLocal.src = "";
+    }
     if (btnZoom) btnZoom.style.display = 'none';
 
-    // Clean up
+    // Clean up navigasi lama
     const oldArrows = displayContainer.querySelectorAll('.nav-arrow-prev, .nav-arrow-next, .mobile-slider-indicator');
     oldArrows.forEach(el => el.remove());
 
     // --- STATE MANAGEMENT ---
     let currentIndex = 0;
 
-    // Fungsi Ganti Gambar Utama
+    // Fungsi Ganti Tampilan Utama
     const setMainDisplay = (index, direction = 'next') => {
         const media = mediaList[index];
         currentIndex = index;
 
-        // Reset Class Animasi
+        // Reset semua elemen media dulu
         mainImg.classList.remove('active', 'anim-next', 'anim-prev');
-        void mainImg.offsetWidth; // Force Reflow
+        mainImg.style.display = 'none'; // Sembunyikan img
+        
+        if(mainVideoIframe) {
+            mainVideoIframe.classList.remove('active'); 
+            mainVideoIframe.style.display = 'none';
+            mainVideoIframe.src = "";
+        }
+        if(mainVideoLocal) {
+            mainVideoLocal.style.display = 'none';
+            mainVideoLocal.pause();
+        }
 
         // Reset Zoom Style
         mainImg.style.transform = "scale(1)";
         mainImg.style.transformOrigin = "center center";
 
+        // --- LOGIKA TAMPILAN BERDASARKAN TIPE ---
         if (media.type === 'image') {
-            mainVideo.classList.remove('active');
-            mainVideo.src = "";
-
+            // Tampilkan Gambar
             mainImg.src = `/${media.src}`;
+            mainImg.style.display = 'block'; // Pastikan terlihat
             mainImg.classList.add('active');
 
-            if (direction === 'next') {
-                mainImg.classList.add('anim-next');
-            } else {
-                mainImg.classList.add('anim-prev');
-            }
+            if (direction === 'next') mainImg.classList.add('anim-next');
+            else mainImg.classList.add('anim-prev');
 
             if (btnZoom) {
                 btnZoom.style.display = 'block';
@@ -600,13 +666,27 @@ function renderDetailContent(product) {
                     openLightbox(`/${media.src}`);
                 };
             }
-        } else {
-            mainImg.classList.remove('active');
+        } else if (media.type === 'video') {
+            // Sembunyikan tombol zoom saat video
             if (btnZoom) btnZoom.style.display = 'none';
 
-            const videoSrc = media.src.includes('?') ? `${media.src}&autoplay=1` : `${media.src}?autoplay=1`;
-            mainVideo.src = videoSrc;
-            mainVideo.classList.add('active');
+            if (media.subtype === 'youtube') {
+                // Tampilkan Iframe YouTube
+                const videoSrc = media.src.includes('?') ? `${media.src}&autoplay=1` : `${media.src}?autoplay=1`;
+                if(mainVideoIframe) {
+                    mainVideoIframe.src = videoSrc;
+                    mainVideoIframe.style.display = 'block';
+                    mainVideoIframe.classList.add('active');
+                }
+            } else if (media.subtype === 'local') {
+                // Tampilkan Video Lokal (MP4)
+                if(mainVideoLocal) {
+                    // Pastikan path diawali slash jika di root
+                    mainVideoLocal.src = `/${media.src}`; 
+                    mainVideoLocal.style.display = 'block';
+                    mainVideoLocal.play().catch(e => console.log("Autoplay blocked by browser policy"));
+                }
+            }
         }
 
         // Update Active Thumbnail
@@ -639,36 +719,24 @@ function renderDetailContent(product) {
 
     displayContainer.addEventListener('touchstart', e => {
         touchStartX = e.changedTouches[0].screenX;
-    }, {
-        passive: true
-    });
+    }, { passive: true });
 
     displayContainer.addEventListener('touchend', e => {
         touchEndX = e.changedTouches[0].screenX;
         handleSwipe();
-    }, {
-        passive: true
-    });
+    }, { passive: true });
 
     function handleSwipe() {
         const threshold = 50;
-        if (touchStartX - touchEndX > threshold) {
-            changeMedia('next');
-        }
-        if (touchEndX - touchStartX > threshold) {
-            changeMedia('prev');
-        }
+        if (touchStartX - touchEndX > threshold) changeMedia('next');
+        if (touchEndX - touchStartX > threshold) changeMedia('prev');
     }
 
-    // --- LOGIKA HOVER ZOOM (Hanya Desktop) ---
+    // --- LOGIKA HOVER ZOOM (Hanya Desktop & Hanya Image) ---
     displayContainer.onmousemove = function(e) {
+        // Cek apakah yang aktif adalah gambar
         if (window.innerWidth > 768 && mainImg.classList.contains('active')) {
-            const {
-                left,
-                top,
-                width,
-                height
-            } = displayContainer.getBoundingClientRect();
+            const { left, top, width, height } = displayContainer.getBoundingClientRect();
             const x = e.clientX - left;
             const y = e.clientY - top;
             const xPercent = (x / width) * 100;
@@ -701,8 +769,12 @@ function renderDetailContent(product) {
         if (media.type === 'image') {
             thumbBox.innerHTML = `<img src="/${media.src}" alt="Thumb">`;
         } else {
+            // Untuk video, gunakan thumbnail (YouTube API atau Featured Image untuk lokal)
+            // Tambahkan icon play
+            const thumbSrc = media.subtype === 'youtube' ? media.thumbnail : `/${media.thumbnail}`;
+            
             thumbBox.innerHTML = `
-                <img src="${media.thumbnail}" alt="Video">
+                <img src="${thumbSrc}" alt="Video Thumb">
                 <div class="video-thumb-overlay"><i class="fas fa-play"></i></div>
             `;
         }
