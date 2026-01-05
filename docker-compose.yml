@@ -1,0 +1,12 @@
+services:
+  ariefmedia:
+    image: angganix/aidemfeira:latest
+    container_name: ariefmedia_express
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "2003:3000"
+    env_file:
+      - .env
+    restart: unless-stopped

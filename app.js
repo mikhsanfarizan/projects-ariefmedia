@@ -1,3 +1,4 @@
+import "dotenv/config"
 import express from "express";
 import expressLayouts from 'express-ejs-layouts';
 import path from "path";
@@ -17,6 +18,7 @@ import productRoutes from "./routes/product.js";
 app.use("/", webRoutes);
 app.use("/product", productRoutes);
 
-app.listen(3000, () =>
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () =>
   console.log('Server running at http://localhost:3000')
 );
